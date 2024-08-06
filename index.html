@@ -117,7 +117,7 @@
                     <div id="student-list"></div>
                     
                     <button type="button" onclick="addStudent()">+</button>
-                    <button type="submit" onclick="submitForm(event)">Submit</button>
+                    <button type="button" onclick="submitForm()">Submit</button>
                 </form>
             </div>
         </div>
@@ -228,15 +228,63 @@
             localStorage.setItem('teacherData', JSON.stringify(teacherData));
         }
 
-        function submitForm(event) {
-            event.preventDefault();
+        function submitForm() {
             updateStudentList();
             const teacherSelect = document.getElementById("teacher-select").value;
-            alert("Details submitted successfully!");
+            if (!teacherSelect) {
+                alert("Please select a teacher.");
+                return;
+            }
+
+            const teacher = teacherData[teacherSelect];
+            const xmlData = generateXML(teacherSelect, teacher);
+            downloadXML(xmlData, `${teacherSelect}_data.xml`);
+
+            // Reset the form and hide details
             document.getElementById("teacher-form").reset();
             document.getElementById("student-list").innerHTML = "";
             document.getElementById("teacher-details").style.display = "none";
-            displayStudentTable(teacherSelect);
+            document.getElementById("student-table-container").innerHTML = "";
+        }
+
+        function generateXML(teacherSelect, teacher) {
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            xml += `<TeacherDetails>\n`;
+            xml += `  <Teacher>\n`;
+            xml += `    <Name>${teacher.name}</Name>\n`;
+            xml += `    <Date>${document.getElementById("date").value}</Date>\n`;
+            xml += `    <Time>${document.getElementById("time").value}</Time>\n`;
+            xml += `    <Utbildning>${document.getElementById("utbildning").value}</Utbildning>\n`;
+            xml += `    <Students>\n`;
+
+            teacher.students.forEach(student => {
+                xml += `      <Student>\n`;
+                xml += `        <No>${student.no}</No>\n`;
+                xml += `        <Name>${student.name}</Name>\n`;
+                xml += `        <PerNo>${student.perNo}</PerNo>\n`;
+                xml += `        <MobNr>${student.mobNr}</MobNr>\n`;
+                xml += `        <Email>${student.email}</Email>\n`;
+                xml += `        <ID>${student.id}</ID>\n`;
+                xml += `      </Student>\n`;
+            });
+
+            xml += `    </Students>\n`;
+            xml += `  </Teacher>\n`;
+            xml += `</TeacherDetails>\n`;
+
+            return xml;
+        }
+
+        function downloadXML(xmlData, filename) {
+            const blob = new Blob([xmlData], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         function displayStudentTable(teacher) {
