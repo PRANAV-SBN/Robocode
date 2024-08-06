@@ -12,6 +12,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
 
         .container {
@@ -61,6 +62,22 @@
             padding: 10px;
             border: 1px solid #ccc;
         }
+
+        table {
+            margin-top: 20px;
+            width: 80%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
     </style>
 </head>
 <body>
@@ -98,8 +115,9 @@
             </div>
         </div>
     </div>
+    <div id="student-table-container" style="width: 80%; margin-top: 20px;"></div>
     <script>
-        const teacherData = {
+        const teacherData = JSON.parse(localStorage.getItem('teacherData')) || {
             teacher1: {
                 name: "Teacher 1",
                 students: []
@@ -124,8 +142,10 @@
                 teacherNameInput.value = teacherData[selectedTeacher].name;
                 teacherDetailsDiv.style.display = "block";
                 document.getElementById("student-list").innerHTML = "";
+                displayStudentTable(selectedTeacher);
             } else {
                 teacherDetailsDiv.style.display = "none";
+                document.getElementById("student-table-container").innerHTML = "";
             }
         }
 
@@ -175,12 +195,61 @@
                 students.push(student);
             }
             teacherData[teacherSelect].students = students;
+            localStorage.setItem('teacherData', JSON.stringify(teacherData));
             alert("Details submitted successfully!");
             document.getElementById("teacher-form").reset();
             document.getElementById("student-list").innerHTML = "";
             document.getElementById("teacher-details").style.display = "none";
+            displayStudentTable(teacherSelect);
         }
+
+        function displayStudentTable(teacher) {
+            const studentTableContainer = document.getElementById("student-table-container");
+            const students = teacherData[teacher].students;
+            if (students.length === 0) {
+                studentTableContainer.innerHTML = "";
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Name</th>
+                            <th>Per.No</th>
+                            <th>Mob.Nr</th>
+                            <th>Email</th>
+                            <th>ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            for (const student of students) {
+                tableHTML += `
+                    <tr>
+                        <td>${student.no}</td>
+                        <td>${student.name}</td>
+                        <td>${student.perNo}</td>
+                        <td>${student.mobNr}</td>
+                        <td>${student.email}</td>
+                        <td>${student.id}</td>
+                    </tr>
+                `;
+            }
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            studentTableContainer.innerHTML = tableHTML;
+        }
+
+        window.onload = function() {
+            const teacherSelect = document.getElementById("teacher-select").value;
+            if (teacherSelect) {
+                loadTeacherDetails();
+            }
+        };
     </script>
 </body>
 </html>
-
