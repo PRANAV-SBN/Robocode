@@ -61,6 +61,13 @@
             margin-top: 10px;
             padding: 10px;
             border: 1px solid #ccc;
+            position: relative;
+        }
+
+        .student-form button {
+            position: absolute;
+            right: 10px;
+            top: 10px;
         }
 
         table {
@@ -154,6 +161,7 @@
             const studentIndex = studentListDiv.children.length + 1;
             const studentForm = document.createElement("div");
             studentForm.classList.add("student-form");
+            studentForm.dataset.index = studentIndex; // Store index for reference
             studentForm.innerHTML = `
                 <label for="student-no-${studentIndex}">No.:</label>
                 <input type="text" id="student-no-${studentIndex}" name="student-no-${studentIndex}">
@@ -172,18 +180,39 @@
                 
                 <label for="student-id-${studentIndex}">ID:</label>
                 <input type="text" id="student-id-${studentIndex}" name="student-id-${studentIndex}">
+                
+                <button type="button" onclick="editStudent(${studentIndex})">Edit</button>
+                <button type="button" onclick="deleteStudent(${studentIndex})">Delete</button>
             `;
             studentListDiv.appendChild(studentForm);
         }
 
-        function submitForm(event) {
-            event.preventDefault();
-            const teacherSelect = document.getElementById("teacher-select").value;
-            const studentListDiv = document.getElementById("student-list");
-            const studentForms = studentListDiv.getElementsByClassName("student-form");
+        function editStudent(index) {
+            const studentForms = document.querySelectorAll("#student-list .student-form");
+            const formToEdit = studentForms[index - 1]; // Index is 1-based
+            const studentInputs = formToEdit.querySelectorAll("input");
 
-            const students = [];
-            for (const form of studentForms) {
+            studentInputs.forEach(input => {
+                input.disabled = false;
+            });
+
+            // Optionally, you can add a save button to finalize editing
+        }
+
+        function deleteStudent(index) {
+            const studentForms = document.querySelectorAll("#student-list .student-form");
+            const formToDelete = studentForms[index - 1]; // Index is 1-based
+
+            if (confirm("Are you sure you want to delete this student?")) {
+                formToDelete.remove();
+                updateStudentList();
+            }
+        }
+
+        function updateStudentList() {
+            const studentForms = document.querySelectorAll("#student-list .student-form");
+            const updatedStudents = [];
+            studentForms.forEach((form, index) => {
                 const student = {
                     no: form.querySelector(`input[name^='student-no']`).value,
                     name: form.querySelector(`input[name^='student-name']`).value,
@@ -192,10 +221,17 @@
                     email: form.querySelector(`input[name^='student-email']`).value,
                     id: form.querySelector(`input[name^='student-id']`).value,
                 };
-                students.push(student);
-            }
-            teacherData[teacherSelect].students = students;
+                updatedStudents.push(student);
+            });
+            const teacherSelect = document.getElementById("teacher-select").value;
+            teacherData[teacherSelect].students = updatedStudents;
             localStorage.setItem('teacherData', JSON.stringify(teacherData));
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            updateStudentList();
+            const teacherSelect = document.getElementById("teacher-select").value;
             alert("Details submitted successfully!");
             document.getElementById("teacher-form").reset();
             document.getElementById("student-list").innerHTML = "";
