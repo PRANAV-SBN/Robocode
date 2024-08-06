@@ -287,46 +287,7 @@
             URL.revokeObjectURL(url);
         }
 
-        function displayStudentTable(teacher) {
-            const studentTableContainer = document.getElementById("student-table-container");
-            const students = teacherData[teacher].students;
-            if (students.length === 0) {
-                studentTableContainer.innerHTML = "";
-                return;
-            }
 
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>Name</th>
-                            <th>Per.No</th>
-                            <th>Mob.Nr</th>
-                            <th>Email</th>
-                            <th>ID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            for (const student of students) {
-                tableHTML += `
-                    <tr>
-                        <td>${student.no}</td>
-                        <td>${student.name}</td>
-                        <td>${student.perNo}</td>
-                        <td>${student.mobNr}</td>
-                        <td>${student.email}</td>
-                        <td>${student.id}</td>
-                    </tr>
-                `;
-            }
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
-            studentTableContainer.innerHTML = tableHTML;
-        }
 
         window.onload = function() {
             const teacherSelect = document.getElementById("teacher-select").value;
