@@ -116,21 +116,23 @@
         </div>
     </div>
     <div id="student-table-container" style="width: 80%; margin-top: 20px;"></div>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
     <script>
-        const teacherData = JSON.parse(localStorage.getItem('teacherData')) || {
-            teacher1: {
-                name: "Teacher 1",
-                students: []
-            },
-            teacher2: {
-                name: "Teacher 2",
-                students: []
-            },
-            teacher3: {
-                name: "Teacher 3",
-                students: []
-            }
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "https://robocode-7804b-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         function loadTeacherDetails() {
             const teacherSelect = document.getElementById("teacher-select");
@@ -139,7 +141,7 @@
             
             if (selectedTeacher) {
                 const teacherNameInput = document.getElementById("teacher-name");
-                teacherNameInput.value = teacherData[selectedTeacher].name;
+                teacherNameInput.value = selectedTeacher.replace(/^\w/, c => c.toUpperCase()); // Assuming teacher1 -> Teacher 1, etc.
                 teacherDetailsDiv.style.display = "block";
                 document.getElementById("student-list").innerHTML = "";
                 displayStudentTable(selectedTeacher);
@@ -194,8 +196,8 @@
                 };
                 students.push(student);
             }
-            teacherData[teacherSelect].students = students;
-            localStorage.setItem('teacherData', JSON.stringify(teacherData));
+
+            saveToDatabase(teacherSelect, students);
             alert("Details submitted successfully!");
             document.getElementById("teacher-form").reset();
             document.getElementById("student-list").innerHTML = "";
@@ -203,45 +205,60 @@
             displayStudentTable(teacherSelect);
         }
 
-        function displayStudentTable(teacher) {
-            const studentTableContainer = document.getElementById("student-table-container");
-            const students = teacherData[teacher].students;
-            if (students.length === 0) {
-                studentTableContainer.innerHTML = "";
-                return;
-            }
+        function saveToDatabase(teacher, students) {
+            db.ref('teachers/' + teacher).set({
+                students: students
+            }).then(() => {
+                console.log("Data saved successfully.");
+            }).catch((error) => {
+                console.error("Error saving data: ", error);
+            });
+        }
 
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>Name</th>
-                            <th>Per.No</th>
-                            <th>Mob.Nr</th>
-                            <th>Email</th>
-                            <th>ID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            for (const student of students) {
-                tableHTML += `
-                    <tr>
-                        <td>${student.no}</td>
-                        <td>${student.name}</td>
-                        <td>${student.perNo}</td>
-                        <td>${student.mobNr}</td>
-                        <td>${student.email}</td>
-                        <td>${student.id}</td>
-                    </tr>
+        function displayStudentTable(teacher) {
+            db.ref('teachers/' + teacher).once('value').then((snapshot) => {
+                const students = snapshot.val()?.students || [];
+                const studentTableContainer = document.getElementById("student-table-container");
+                
+                if (students.length === 0) {
+                    studentTableContainer.innerHTML = "";
+                    return;
+                }
+
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Name</th>
+                                <th>Per.No</th>
+                                <th>Mob.Nr</th>
+                                <th>Email</th>
+                                <th>ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                 `;
-            }
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
-            studentTableContainer.innerHTML = tableHTML;
+                for (const student of students) {
+                    tableHTML += `
+                        <tr>
+                            <td>${student.no}</td>
+                            <td>${student.name}</td>
+                            <td>${student.perNo}</td>
+                            <td>${student.mobNr}</td>
+                            <td>${student.email}</td>
+                            <td>${student.id}</td>
+                        </tr>
+                    `;
+                }
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                studentTableContainer.innerHTML = tableHTML;
+            }).catch((error) => {
+                console.error("Error retrieving data: ", error);
+            });
         }
 
         window.onload = function() {
