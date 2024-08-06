@@ -1,1 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher-Student Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            border: 1px solid #ccc;
+            width: 80%;
+            height: 80%;
+        }
+
+        .left-pane, .right-pane {
+            padding: 20px;
+        }
+
+        .left-pane {
+            width: 30%;
+            border-right: 1px solid #ccc;
+        }
+
+        .right-pane {
+            width: 70%;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #student-list {
+            margin-top: 10px;
+        }
+
+        .student-form {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-pane">
+            <label for="teacher-select">Select Teacher:</label>
+            <select id="teacher-select" onchange="loadTeacherDetails()">
+                <option value="">--Select Teacher--</option>
+                <option value="teacher1">Teacher 1</option>
+                <option value="teacher2">Teacher 2</option>
+                <option value="teacher3">Teacher 3</option>
+            </select>
+        </div>
+        <div class="right-pane">
+            <div id="teacher-details" style="display: none;">
+                <form id="teacher-form">
+                    <label for="teacher-name">Name:</label>
+                    <input type="text" id="teacher-name" name="teacher-name" readonly>
+                    
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date">
+                    
+                    <label for="time">Time:</label>
+                    <input type="time" id="time" name="time">
+                    
+                    <label for="utbildning">Utbildning:</label>
+                    <input type="text" id="utbildning" name="utbildning">
+                    
+                    <h3>Students</h3>
+                    <div id="student-list"></div>
+                    
+                    <button type="button" onclick="addStudent()">+</button>
+                    <button type="submit" onclick="submitForm(event)">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        const teacherData = {
+            teacher1: {
+                name: "Teacher 1",
+                students: []
+            },
+            teacher2: {
+                name: "Teacher 2",
+                students: []
+            },
+            teacher3: {
+                name: "Teacher 3",
+                students: []
+            }
+        };
+
+        function loadTeacherDetails() {
+            const teacherSelect = document.getElementById("teacher-select");
+            const selectedTeacher = teacherSelect.value;
+            const teacherDetailsDiv = document.getElementById("teacher-details");
+            
+            if (selectedTeacher) {
+                const teacherNameInput = document.getElementById("teacher-name");
+                teacherNameInput.value = teacherData[selectedTeacher].name;
+                teacherDetailsDiv.style.display = "block";
+                document.getElementById("student-list").innerHTML = "";
+            } else {
+                teacherDetailsDiv.style.display = "none";
+            }
+        }
+
+        function addStudent() {
+            const studentListDiv = document.getElementById("student-list");
+            const studentIndex = studentListDiv.children.length + 1;
+            const studentForm = document.createElement("div");
+            studentForm.classList.add("student-form");
+            studentForm.innerHTML = `
+                <label for="student-no-${studentIndex}">No.:</label>
+                <input type="text" id="student-no-${studentIndex}" name="student-no-${studentIndex}">
+                
+                <label for="student-name-${studentIndex}">Name:</label>
+                <input type="text" id="student-name-${studentIndex}" name="student-name-${studentIndex}">
+                
+                <label for="student-per-no-${studentIndex}">Per.No:</label>
+                <input type="text" id="student-per-no-${studentIndex}" name="student-per-no-${studentIndex}">
+                
+                <label for="student-mob-nr-${studentIndex}">Mob.Nr:</label>
+                <input type="text" id="student-mob-nr-${studentIndex}" name="student-mob-nr-${studentIndex}">
+                
+                <label for="student-email-${studentIndex}">Email:</label>
+                <input type="email" id="student-email-${studentIndex}" name="student-email-${studentIndex}">
+                
+                <label for="student-id-${studentIndex}">ID:</label>
+                <input type="text" id="student-id-${studentIndex}" name="student-id-${studentIndex}">
+            `;
+            studentListDiv.appendChild(studentForm);
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            const teacherSelect = document.getElementById("teacher-select").value;
+            const studentListDiv = document.getElementById("student-list");
+            const studentForms = studentListDiv.getElementsByClassName("student-form");
+
+            const students = [];
+            for (const form of studentForms) {
+                const student = {
+                    no: form.querySelector(`input[name^='student-no']`).value,
+                    name: form.querySelector(`input[name^='student-name']`).value,
+                    perNo: form.querySelector(`input[name^='student-per-no']`).value,
+                    mobNr: form.querySelector(`input[name^='student-mob-nr']`).value,
+                    email: form.querySelector(`input[name^='student-email']`).value,
+                    id: form.querySelector(`input[name^='student-id']`).value,
+                };
+                students.push(student);
+            }
+            teacherData[teacherSelect].students = students;
+            alert("Details submitted successfully!");
+            document.getElementById("teacher-form").reset();
+            document.getElementById("student-list").innerHTML = "";
+            document.getElementById("teacher-details").style.display = "none";
+        }
+    </script>
+</body>
+</html>
 
