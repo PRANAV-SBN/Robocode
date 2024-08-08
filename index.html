@@ -290,51 +290,7 @@
             document.body.removeChild(a);
         }
 
-        function displayStudentTable(selectedTeacher) {
-            const studentTableContainer = document.getElementById("student-table-container");
-            const students = teacherData[selectedTeacher].students;
-
-            if (students.length === 0) {
-                studentTableContainer.innerHTML = "<p>No students available.</p>";
-                return;
-            }
-
-            let tableHtml = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Name</th>
-                            <th>Per.No</th>
-                            <th>Mob.Nr</th>
-                            <th>Email</th>
-                            <th>ID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            students.forEach(student => {
-                tableHtml += `
-                    <tr>
-                        <td>${student.no}</td>
-                        <td>${student.name}</td>
-                        <td>${student.perNo}</td>
-                        <td>${student.mobNr}</td>
-                        <td>${student.email}</td>
-                        <td>${student.id}</td>
-                    </tr>
-                `;
-            });
-
-            tableHtml += `
-                    </tbody>
-                </table>
-            `;
-
-            studentTableContainer.innerHTML = tableHtml;
-        }
-
+       
         // Load teacher names when the page loads
         window.onload = loadTeacherNames;
     </script>
