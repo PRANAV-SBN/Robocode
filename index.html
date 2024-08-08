@@ -117,7 +117,7 @@
                     <div id="student-list"></div>
                     
                     <button type="button" onclick="addStudent()">+</button>
-                    <button type="button" onclick="submitForm(event)">Submit</button>
+                    <button type="submit" onclick="submitForm(event)">Submit</button>
                 </form>
             </div>
         </div>
@@ -232,55 +232,69 @@
             event.preventDefault();
             updateStudentList();
             const teacherSelect = document.getElementById("teacher-select").value;
-            const csvData = generateCSV(teacherSelect);
-            downloadCSV(csvData, `${teacherSelect}_data.csv`);
-            alert("Details submitted and CSV downloaded successfully!");
+            const teacherDetails = teacherData[teacherSelect];
+            const csv = generateCSV(teacherDetails);
+            const xml = generateXML(teacherDetails);
+            downloadFile(csv, "teacher_student_data.csv", "text/csv");
+            downloadFile(xml, "teacher_student_data.xml", "application/xml");
+            alert("Details submitted successfully!");
             document.getElementById("teacher-form").reset();
             document.getElementById("student-list").innerHTML = "";
             document.getElementById("teacher-details").style.display = "none";
+            displayStudentTable(teacherSelect);
         }
 
-        function generateCSV(teacher) {
-            const teacherDetails = teacherData[teacher];
-            const date = document.getElementById("date").value;
-            const time = document.getElementById("time").value;
-            const utbildning = document.getElementById("utbildning").value;
-
+        function generateCSV(teacherDetails) {
             let csv = `Lärare,Datum,Tid,Utbildning\n`;
-            csv += `${teacherDetails.name},${date},${time},${utbildning}\n\n`;
+            csv += `${teacherDetails.name},${document.getElementById("date").value},${document.getElementById("time").value},${document.getElementById("utbildning").value}\n\n`;
+            csv += `No,Name,PerNo,MobNr,Email,ID\n`;
 
-            csv += `Nr,Namn,Per.No,Mob.Nr,Email,ID\n`;
-            for (const student of teacherDetails.students) {
+            teacherDetails.students.forEach(student => {
                 csv += `${student.no},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
-            }
+            });
 
             return csv;
         }
 
-        function downloadCSV(csv, filename) {
-            const csvFile = new Blob([csv], { type: "text/csv" });
-            const downloadLink = document.createElement("a");
-            downloadLink.download = filename;
-            downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
+        function generateXML(teacherDetails) {
+            let xml = `<Rapport>\n`;
+
+            teacherDetails.students.forEach(student => {
+                xml += `  <Elev>\n`;
+                xml += `    <PersonNr>${student.perNo}</PersonNr>\n`;
+                xml += `    <UtbDatum>${document.getElementById("date").value}</UtbDatum>\n`;
+                xml += `  </Elev>\n`;
+            });
+
+            xml += `</Rapport>`;
+
+            return xml;
         }
 
-        function displayStudentTable(teacher) {
+        function downloadFile(content, fileName, mimeType) {
+            const a = document.createElement("a");
+            const blob = new Blob([content], { type: mimeType });
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function displayStudentTable(selectedTeacher) {
             const studentTableContainer = document.getElementById("student-table-container");
-            const students = teacherData[teacher].students;
+            const students = teacherData[selectedTeacher].students;
+            
             if (students.length === 0) {
-                studentTableContainer.innerHTML = "";
+                studentTableContainer.innerHTML = "<p>No students available.</p>";
                 return;
             }
 
-            let tableHTML = `
+            let tableHtml = `
                 <table>
                     <thead>
                         <tr>
-                            <th>No.</th>
+                            <th>No</th>
                             <th>Name</th>
                             <th>Per.No</th>
                             <th>Mob.Nr</th>
@@ -290,8 +304,9 @@
                     </thead>
                     <tbody>
             `;
-            for (const student of students) {
-                tableHTML += `
+
+            students.forEach(student => {
+                tableHtml += `
                     <tr>
                         <td>${student.no}</td>
                         <td>${student.name}</td>
@@ -301,20 +316,15 @@
                         <td>${student.id}</td>
                     </tr>
                 `;
-            }
-            tableHTML += `
+            });
+
+            tableHtml += `
                     </tbody>
                 </table>
             `;
-            studentTableContainer.innerHTML = tableHTML;
-        }
 
-        window.onload = function() {
-            const teacherSelect = document.getElementById("teacher-select").value;
-            if (teacherSelect) {
-                loadTeacherDetails();
-            }
-        };
+            studentTableContainer.innerHTML = tableHtml;
+        }
     </script>
 </body>
 </html>
