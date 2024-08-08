@@ -117,7 +117,7 @@
                     <div id="student-list"></div>
                     
                     <button type="button" onclick="addStudent()">+</button>
-                    <button type="button" onclick="submitForm()">Submit</button>
+                    <button type="button" onclick="submitForm(event)">Submit</button>
                 </form>
             </div>
         </div>
@@ -228,76 +228,85 @@
             localStorage.setItem('teacherData', JSON.stringify(teacherData));
         }
 
-        function submitForm() {
+        function submitForm(event) {
+            event.preventDefault();
             updateStudentList();
             const teacherSelect = document.getElementById("teacher-select").value;
-            if (!teacherSelect) {
-                alert("Please select a teacher.");
-                return;
-            }
-
-            const teacher = teacherData[teacherSelect];
-            const xmlData = generateXML(teacherSelect, teacher);
-            const csvData = generateCSV(teacher);
-
-            downloadFile(xmlData, `${teacherSelect}_data.xml`, 'application/xml');
-            downloadFile(csvData, `${teacherSelect}_data.csv`, 'text/csv');
-
-            // Reset the form and hide details
+            const csvData = generateCSV(teacherSelect);
+            downloadCSV(csvData, `${teacherSelect}_data.csv`);
+            alert("Details submitted and CSV downloaded successfully!");
             document.getElementById("teacher-form").reset();
             document.getElementById("student-list").innerHTML = "";
             document.getElementById("teacher-details").style.display = "none";
-            document.getElementById("student-table-container").innerHTML = "";
-        }
-
-        function generateXML(teacherSelect, teacher) {
-            let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-            xml += `<TeacherDetails>\n`;
-            xml += `  <Teacher>\n`;
-            xml += `    <Name>${teacher.name}</Name>\n`;
-            xml += `    <Date>${document.getElementById("date").value}</Date>\n`;
-            xml += `    <Time>${document.getElementById("time").value}</Time>\n`;
-            xml += `    <Utbildning>${document.getElementById("utbildning").value}</Utbildning>\n`;
-            xml += `    <Students>\n`;
-
-            teacher.students.forEach(student => {
-                xml += `      <Student>\n`;
-                xml += `        <No>${student.no}</No>\n`;
-                xml += `        <Name>${student.name}</Name>\n`;
-                xml += `        <PerNo>${student.perNo}</PerNo>\n`;
-                xml += `        <MobNr>${student.mobNr}</MobNr}\n`;
-                xml += `        <Email>${student.email}</Email>\n`;
-                xml += `        <ID>${student.id}</ID>\n`;
-                xml += `      </Student>\n`;
-            });
-
-            xml += `    </Students>\n`;
-            xml += `  </Teacher>\n`;
-            xml += `</TeacherDetails>\n`;
-
-            return xml;
         }
 
         function generateCSV(teacher) {
-            let csv = `No,Name,PerNo,MobNr,Email,ID\n`;
+            const teacherDetails = teacherData[teacher];
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+            const utbildning = document.getElementById("utbildning").value;
 
-            teacher.students.forEach(student => {
+            let csv = `Lärare,Datum,Tid,Utbildning\n`;
+            csv += `${teacherDetails.name},${date},${time},${utbildning}\n\n`;
+
+            csv += `Nr,Namn,Per.No,Mob.Nr,Email,ID\n`;
+            for (const student of teacherDetails.students) {
                 csv += `${student.no},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
-            });
+            }
 
             return csv;
         }
 
-        function downloadFile(data, filename, type) {
-            const blob = new Blob([data], { type: type });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        function downloadCSV(csv, filename) {
+            const csvFile = new Blob([csv], { type: "text/csv" });
+            const downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        function displayStudentTable(teacher) {
+            const studentTableContainer = document.getElementById("student-table-container");
+            const students = teacherData[teacher].students;
+            if (students.length === 0) {
+                studentTableContainer.innerHTML = "";
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Name</th>
+                            <th>Per.No</th>
+                            <th>Mob.Nr</th>
+                            <th>Email</th>
+                            <th>ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            for (const student of students) {
+                tableHTML += `
+                    <tr>
+                        <td>${student.no}</td>
+                        <td>${student.name}</td>
+                        <td>${student.perNo}</td>
+                        <td>${student.mobNr}</td>
+                        <td>${student.email}</td>
+                        <td>${student.id}</td>
+                    </tr>
+                `;
+            }
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            studentTableContainer.innerHTML = tableHTML;
         }
 
         window.onload = function() {
