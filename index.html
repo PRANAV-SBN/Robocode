@@ -259,8 +259,8 @@
             csv += `${teacherDetails.name},${document.getElementById("date").value},${document.getElementById("time").value},${document.getElementById("utbildning").value}\n\n`;
             csv += `Nr,Namn,Per.No,Mob.Nr,Email,ID\n`;
 
-            teacherDetails.students.forEach(student => {
-                csv += `${student.no},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
+            teacherDetails.students.forEach((student, index) => {
+                csv += `${index + 1},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
             });
 
             return csv;
