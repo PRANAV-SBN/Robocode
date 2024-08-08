@@ -257,7 +257,7 @@
         function generateCSV(teacherDetails, date, time, utbildning) {
             let csv = `Lärare,Datum,Tid,Utbildning\n`;
             csv += `${teacherDetails.name},${document.getElementById("date").value},${document.getElementById("time").value},${document.getElementById("utbildning").value}\n\n`;
-            csv += `No,Name,PerNo,MobNr,Email,ID\n`;
+            csv += `Nr,Namn,Per.No,Mob.Nr,Email,ID\n`;
 
             teacherDetails.students.forEach(student => {
                 csv += `${student.no},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
