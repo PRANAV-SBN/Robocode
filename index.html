@@ -93,9 +93,6 @@
             <label for="teacher-select">Select Teacher:</label>
             <select id="teacher-select" onchange="loadTeacherDetails()">
                 <option value="">--Select Teacher--</option>
-                <option value="teacher1">Teacher 1</option>
-                <option value="teacher2">Teacher 2</option>
-                <option value="teacher3">Teacher 3</option>
             </select>
         </div>
         <div class="right-pane">
@@ -124,20 +121,29 @@
     </div>
     <div id="student-table-container" style="width: 80%; margin-top: 20px;"></div>
     <script>
-        const teacherData = JSON.parse(localStorage.getItem('teacherData')) || {
-            teacher1: {
-                name: "Teacher 1",
-                students: []
-            },
-            teacher2: {
-                name: "Teacher 2",
-                students: []
-            },
-            teacher3: {
-                name: "Teacher 3",
-                students: []
+        // Load teacher names from the text file
+        async function loadTeacherNames() {
+            try {
+                const response = await fetch('teachers.txt');
+                const text = await response.text();
+                const teacherNames = text.split('\n').filter(name => name.trim() !== '');
+                populateTeacherSelect(teacherNames);
+            } catch (error) {
+                console.error('Error loading teacher names:', error);
             }
-        };
+        }
+
+        function populateTeacherSelect(teacherNames) {
+            const teacherSelect = document.getElementById('teacher-select');
+            teacherNames.forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = `teacher${index + 1}`;
+                option.textContent = name;
+                teacherSelect.appendChild(option);
+            });
+        }
+
+        const teacherData = JSON.parse(localStorage.getItem('teacherData')) || {};
 
         function loadTeacherDetails() {
             const teacherSelect = document.getElementById("teacher-select");
@@ -145,6 +151,12 @@
             const teacherDetailsDiv = document.getElementById("teacher-details");
             
             if (selectedTeacher) {
+                if (!teacherData[selectedTeacher]) {
+                    teacherData[selectedTeacher] = {
+                        name: teacherSelect.options[teacherSelect.selectedIndex].text,
+                        students: []
+                    };
+                }
                 const teacherNameInput = document.getElementById("teacher-name");
                 teacherNameInput.value = teacherData[selectedTeacher].name;
                 teacherDetailsDiv.style.display = "block";
@@ -230,24 +242,21 @@
 
         function submitForm(event) {
             event.preventDefault();
-            updateStudentList();
             const teacherSelect = document.getElementById("teacher-select").value;
-            const teacherDetails = teacherData[teacherSelect];
-            const csv = generateCSV(teacherDetails);
-            const xml = generateXML(teacherDetails);
-            downloadFile(csv, "teacher_student_data.csv", "text/csv");
-            downloadFile(xml, "teacher_student_data.xml", "application/xml");
-            alert("Details submitted successfully!");
-            document.getElementById("teacher-form").reset();
-            document.getElementById("student-list").innerHTML = "";
-            document.getElementById("teacher-details").style.display = "none";
-            displayStudentTable(teacherSelect);
+            const selectedTeacher = teacherData[teacherSelect];
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+            const utbildning = document.getElementById("utbildning").value;
+            const csvContent = generateCSV(selectedTeacher, date, time, utbildning);
+            const xmlContent = generateXML(selectedTeacher, date);
+
+            downloadFile(csvContent, "students.csv", "text/csv");
+            downloadFile(xmlContent, "students.xml", "application/xml");
         }
 
-        function generateCSV(teacherDetails) {
-            let csv = `Lärare,Datum,Tid,Utbildning\n`;
-            csv += `${teacherDetails.name},${document.getElementById("date").value},${document.getElementById("time").value},${document.getElementById("utbildning").value}\n\n`;
-            csv += `No,Name,PerNo,MobNr,Email,ID\n`;
+        function generateCSV(teacherDetails, date, time, utbildning) {
+            let csv = `Lärare,${teacherDetails.name}\nDatum,${date} kl:${time}\nUtbildning,${utbildning}\n\n`;
+            csv += `Nr,Namn,Per.No,Mob.Nr,Email,ID\n`;
 
             teacherDetails.students.forEach(student => {
                 csv += `${student.no},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
@@ -256,13 +265,13 @@
             return csv;
         }
 
-        function generateXML(teacherDetails) {
+        function generateXML(teacherDetails, date) {
             let xml = `<Rapport>\n`;
 
             teacherDetails.students.forEach(student => {
                 xml += `  <Elev>\n`;
                 xml += `    <PersonNr>${student.perNo}</PersonNr>\n`;
-                xml += `    <UtbDatum>${document.getElementById("date").value}</UtbDatum>\n`;
+                xml += `    <UtbDatum>${date}</UtbDatum>\n`;
                 xml += `  </Elev>\n`;
             });
 
@@ -281,7 +290,53 @@
             document.body.removeChild(a);
         }
 
-       
+        function displayStudentTable(selectedTeacher) {
+            const studentTableContainer = document.getElementById("student-table-container");
+            const students = teacherData[selectedTeacher].students;
+
+            if (students.length === 0) {
+                studentTableContainer.innerHTML = "<p>No students available.</p>";
+                return;
+            }
+
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Name</th>
+                            <th>Per.No</th>
+                            <th>Mob.Nr</th>
+                            <th>Email</th>
+                            <th>ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            students.forEach(student => {
+                tableHtml += `
+                    <tr>
+                        <td>${student.no}</td>
+                        <td>${student.name}</td>
+                        <td>${student.perNo}</td>
+                        <td>${student.mobNr}</td>
+                        <td>${student.email}</td>
+                        <td>${student.id}</td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+
+            studentTableContainer.innerHTML = tableHtml;
+        }
+
+        // Load teacher names when the page loads
+        window.onload = loadTeacherNames;
     </script>
 </body>
 </html>
