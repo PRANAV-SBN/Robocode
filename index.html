@@ -238,7 +238,10 @@
 
             const teacher = teacherData[teacherSelect];
             const xmlData = generateXML(teacherSelect, teacher);
-            downloadXML(xmlData, `${teacherSelect}_data.xml`);
+            const csvData = generateCSV(teacher);
+
+            downloadFile(xmlData, `${teacherSelect}_data.xml`, 'application/xml');
+            downloadFile(csvData, `${teacherSelect}_data.csv`, 'text/csv');
 
             // Reset the form and hide details
             document.getElementById("teacher-form").reset();
@@ -262,7 +265,7 @@
                 xml += `        <No>${student.no}</No>\n`;
                 xml += `        <Name>${student.name}</Name>\n`;
                 xml += `        <PerNo>${student.perNo}</PerNo>\n`;
-                xml += `        <MobNr>${student.mobNr}</MobNr>\n`;
+                xml += `        <MobNr>${student.mobNr}</MobNr}\n`;
                 xml += `        <Email>${student.email}</Email>\n`;
                 xml += `        <ID>${student.id}</ID>\n`;
                 xml += `      </Student>\n`;
@@ -275,8 +278,18 @@
             return xml;
         }
 
-        function downloadXML(xmlData, filename) {
-            const blob = new Blob([xmlData], { type: 'application/xml' });
+        function generateCSV(teacher) {
+            let csv = `No,Name,PerNo,MobNr,Email,ID\n`;
+
+            teacher.students.forEach(student => {
+                csv += `${student.no},${student.name},${student.perNo},${student.mobNr},${student.email},${student.id}\n`;
+            });
+
+            return csv;
+        }
+
+        function downloadFile(data, filename, type) {
+            const blob = new Blob([data], { type: type });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -286,8 +299,6 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
-
-
 
         window.onload = function() {
             const teacherSelect = document.getElementById("teacher-select").value;
